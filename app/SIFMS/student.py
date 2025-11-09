@@ -294,7 +294,13 @@ api.add_resource(RespondToComplaint, "/api/v1/sifms/respond/complaint")
 class GetStudentComplaints(Resource):
     def __init__(self):
         self.parser = reqparse.RequestParser()
-        self.parser.add_argument("reg_no", type=str, required=True, help="Registration number is required")
+        self.parser.add_argument(
+            "reg_no",
+            type=str,
+            required=True,
+            location="args",  # ✅ FIXED
+            help="Registration number is required"
+        )
 
     def get(self):
         args = self.parser.parse_args()
@@ -338,6 +344,7 @@ class GetStudentComplaints(Resource):
 
 # ---------- ADD RESOURCE ----------
 api.add_resource(GetStudentComplaints, "/api/v1/sifms/student/complaints")
+
 
 
 class GetAllComplaints(Resource):
