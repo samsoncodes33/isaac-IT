@@ -139,15 +139,19 @@ class StudentLogin(Resource):
                 "message": "Invalid registration number or password"
             })
 
+        # ---------- Build full name ----------
+        full_name = f"{student['surname']} {student['first_name']} {student.get('other_names', '')}".strip()
+
         # ---------- Success ----------
         return jsonify({
             "status": "success",
             "message": "Login successful",
             "data": {
+                "full_name": full_name,
                 "reg_no": student["reg_no"],
                 "surname": student["surname"],
                 "first_name": student["first_name"],
-                "other_names": student.get("other_names", ""),  # Optional field
+                "other_names": student.get("other_names", ""),
                 "department": student["department"],
                 "faculty": student["faculty"],
                 "phone_number": student["phone_number"],
@@ -159,6 +163,7 @@ class StudentLogin(Resource):
 
 # ---------- ADD RESOURCE ----------
 api.add_resource(StudentLogin, "/api/v1/sifms/login")
+
 
 
 # ---------- STUDENT COMPLAINT ----------
