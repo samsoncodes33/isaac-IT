@@ -241,43 +241,40 @@ class RespondToComplaint(Resource):
         self.parser = reqparse.RequestParser()
         self.parser.add_argument("doi_reg_no", type=str, required=True, help="DOI registration number is required")
         self.parser.add_argument("student_reg_no", type=str, required=True, help="Student registration number is required")
+        self.parser.add_argument("complaint_id", type=str, required=True, help="Complaint ID is required")
         self.parser.add_argument("response_message", type=str, required=True, help="Response message is required")
 
     def post(self):
         args = self.parser.parse_args()
         doi_reg_no = args["doi_reg_no"].strip().upper()
         student_reg_no = args["student_reg_no"].strip().upper()
+        complaint_id = args["complaint_id"].strip()
         response_message = args["response_message"].strip()
 
         # ---------- Check if DOI exists ----------
         doi = students.find_one({"reg_no": doi_reg_no})
         if not doi:
-            return jsonify({
-                "status": "error",
-                "message": "DOI not found"
-            })
+            return jsonify({"status": "error", "message": "DOI not found"})
 
         if doi["role"].lower() != "doi":
-            return jsonify({
-                "status": "error",
-                "message": "Only DOI can respond to complaints"
-            })
+            return jsonify({"status": "error", "message": "Only DOI can respond to complaints"})
 
         # ---------- Check if student exists ----------
         student = students.find_one({"reg_no": student_reg_no})
         if not student:
-            return jsonify({
-                "status": "error",
-                "message": "Student not found"
-            })
+            return jsonify({"status": "error", "message": "Student not found"})
 
-        # ---------- Find the student's complaint ----------
-        complaint = complaints.find_one({"student_reg_no": student_reg_no})
-        if not complaint:
-            return jsonify({
-                "status": "error",
-                "message": "No complaint found for this student"
+        # ---------- Check if complaint exists ----------
+        try:
+            complaint = complaints.find_one({
+                "_id": ObjectId(complaint_id),
+                "student_reg_no": student_reg_no
             })
+        except:
+            return jsonify({"status": "error", "message": "Invalid complaint ID"})
+
+        if not complaint:
+            return jsonify({"status": "error", "message": "Complaint not found for this student"})
 
         # ---------- Create the response object ----------
         response_data = {
@@ -287,7 +284,7 @@ class RespondToComplaint(Resource):
             "response_time": datetime.utcnow()
         }
 
-        # ---------- Append the response ----------
+        # ---------- Append the response to the specific complaint ----------
         complaints.update_one(
             {"_id": ObjectId(complaint["_id"])},
             {"$push": {"responses": response_data}}
@@ -302,6 +299,7 @@ class RespondToComplaint(Resource):
 
 # ---------- ADD RESOURCE ----------
 api.add_resource(RespondToComplaint, "/api/v1/sifms/respond/complaint")
+
 
 
 class GetStudentComplaints(Resource):
