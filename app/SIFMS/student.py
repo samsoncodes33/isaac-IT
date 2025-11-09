@@ -187,9 +187,21 @@ class StudentComplaint(Resource):
                 "message": "No student found with the provided registration number"
             })
 
+        # ---------- Prevent duplicate complaint ----------
+        existing_complaint = complaints.find_one({
+            "student_reg_no": reg_no,
+            "complaint": complaint_text
+        })
+
+        if existing_complaint:
+            return jsonify({
+                "status": "error",
+                "message": "You have already submitted this exact complaint"
+            })
+
         # ---------- Prepare complaint data ----------
         complaint_data = {
-            "student_reg_no": student["reg_no"],  # ✅ updated key
+            "student_reg_no": student["reg_no"],  
             "student_id": str(student["_id"]),
             "surname": student["surname"],
             "first_name": student["first_name"],
@@ -201,7 +213,7 @@ class StudentComplaint(Resource):
             "role": student["role"],
             "complaint": complaint_text,
             "timestamp": datetime.utcnow(),
-            "responses": []  # ✅ initialize responses array
+            "responses": []
         }
 
         # ---------- Insert into complaints collection ----------
@@ -220,6 +232,7 @@ class StudentComplaint(Resource):
 
 # ---------- ADD RESOURCE ----------
 api.add_resource(StudentComplaint, "/api/v1/sifms/complaint")
+
 
 
 # ---------- RESPOND TO COMPLAINT ----------
